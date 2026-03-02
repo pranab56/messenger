@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme {
+  --radius: 1rem;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-profit: var(--profit);
+  --color-loss: var(--loss);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+
+/* Base Styles outside @theme */
+@layer base {
+  :root {
+    --background: #F5F5F5;
+    --foreground: #111111;
+    --card: #FFFFFF;
+    --card-foreground: #111111;
+    --popover: #FFFFFF;
+    --popover-foreground: #111111;
+    --primary: #4CAF50;
+    --primary-foreground: #FFFFFF;
+    --secondary: #E0E0E0;
+    --secondary-foreground: #111111;
+    --muted: #F0F0F0;
+    --muted-foreground: #555555;
+    --accent: #4CAF5015;
+    --accent-foreground: #4CAF50;
+    --destructive: #F44336;
+    --border: #DDDDDD;
+    --input: #DDDDDD;
+    --ring: #4CAF50;
+
+    --profit: #4CAF50;
+    --loss: #F44336;
+
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #111111;
+    --sidebar-primary: #4CAF50;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #F5F5F5;
+    --sidebar-accent-foreground: #4CAF50;
+    --sidebar-border: #DDDDDD;
+    --sidebar-ring: #4CAF50;
+  }
+
+  .dark {
+    --background: #121212;
+    --foreground: #EEEEEE;
+    --card: #1E1E1E;
+    --card-foreground: #EEEEEE;
+    --popover: #1A1A1A;
+    --popover-foreground: #EEEEEE;
+    --primary: #66FF66;
+    --primary-foreground: #121212;
+    --secondary: #2C2C2C;
+    --secondary-foreground: #EEEEEE;
+    --muted: #252525;
+    --muted-foreground: #AAAAAA;
+    --accent: #66FF6620;
+    --accent-foreground: #66FF66;
+    --destructive: #FF6666;
+    --border: #444444;
+    --input: #444444;
+    --ring: #66FF66;
+
+    --profit: #66FF66;
+    --loss: #FF6666;
+
+    --sidebar: #1A1A1A;
+    --sidebar-foreground: #EEEEEE;
+    --sidebar-primary: #66FF66;
+    --sidebar-primary-foreground: #121212;
+    --sidebar-accent: #2C2C2C;
+    --sidebar-accent-foreground: #66FF66;
+    --sidebar-border: #444444;
+    --sidebar-ring: #66FF66;
+  }
+
+  * {
+    @apply border-border outline-ring/50 transition-colors duration-300;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.profit-text {
+  color: var(--profit);
+}
+
+.loss-text {
+  color: var(--loss);
+}
+
+/* Global Scrollbar Hiding (But keep scrolling functional) */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+}
