@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const conversationId = searchParams.get('conversationId');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '20');
     const dateFilter = searchParams.get('date'); // YYYY-MM-DD format
 
     if (!conversationId) return NextResponse.json({ error: 'Conversation ID required' }, { status: 400 });
@@ -97,7 +97,6 @@ export async function GET(req: Request) {
           isEdited: 1,
           isDeleted: 1,
           isPinned: 1,
-          readBy: 1,
           status: {
             $cond: {
               if: { $gt: [{ $size: { $ifNull: ['$readBy', []] } }, 0] },
@@ -109,7 +108,9 @@ export async function GET(req: Request) {
       }
     ];
 
+    const t0 = Date.now();
     const messages = await db.collection('messages').aggregate(pipeline).toArray();
+    console.log(`[Messages] conv=${conversationId} page=${page} limit=${limit} count=${messages.length} time=${Date.now() - t0}ms`);
 
     return NextResponse.json({
       messages: messages.reverse(),

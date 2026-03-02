@@ -4,7 +4,7 @@ import { Document, ObjectId, UpdateFilter } from 'mongodb';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
@@ -19,7 +19,12 @@ export async function GET() {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    console.log('Fetching conversations for user ID:', user._id);
+    const { searchParams } = new URL(req.url);
+    const limitParam = parseInt(searchParams.get('limit') || '30', 10);
+    const limit = Math.max(10, Math.min(limitParam, 100));
+
+    const t0 = Date.now();
+    console.log(`[Conversations] Fetching for user: ${user._id} | limit=${limit}`);
 
     const conversations = await db.collection('conversations').aggregate([
       {
@@ -28,11 +33,16 @@ export async function GET() {
           deletedBy: { $nin: [user._id, user._id.toString()] }
         }
       },
+      { $sort: { updatedAt: -1 } },
+      { $limit: limit },
       {
         $lookup: {
           from: 'users',
-          localField: 'participants',
-          foreignField: '_id',
+          let: { p: '$participants' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$_id', '$$p'] } } },
+            { $project: { name: 1, email: 1, profileImage: 1, onlineStatus: 1 } }
+          ],
           as: 'participantDetails'
         }
       },
@@ -61,11 +71,10 @@ export async function GET() {
           ],
           as: 'unreadData'
         }
-      },
-      { $sort: { updatedAt: -1 } }
+      }
     ]).toArray();
 
-    console.log(`Found ${conversations.length} conversations for user ${user.email}`);
+    console.log(`[Conversations] Found ${conversations.length} in ${Date.now() - t0}ms`);
     if (conversations.length > 0) {
       console.log('Sample conversation participants:', conversations[0].participants);
     }

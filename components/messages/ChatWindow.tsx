@@ -247,8 +247,16 @@ export default function ChatWindow({ conversation, currentUser, onMessageSent, o
 
     // Re-join on every (re)connect
     socket.on('connect', joinRoom);
+    socket.on('reconnect', joinRoom);
 
     const onReceiveMessage = (message: Message) => {
+      if (toStr(message.conversationId) === convId) {
+        setMessages(prev => [...prev, message]);
+      }
+    };
+    // Fallback: if receiver didn't join room yet but gets personal-room notification,
+    // still update the open chat in real-time
+    const onNotifyMessage = (message: Message) => {
       if (toStr(message.conversationId) === convId) {
         setMessages(prev => [...prev, message]);
       }
@@ -299,6 +307,7 @@ export default function ChatWindow({ conversation, currentUser, onMessageSent, o
     };
 
     socket.on('receive-message', onReceiveMessage);
+    socket.on('new-message-notification', onNotifyMessage);
     socket.on('user-typing', onUserTyping);
     socket.on('user-stop-typing', onUserStopTyping);
     socket.on('message-edited', onMessageEdited);
@@ -308,7 +317,9 @@ export default function ChatWindow({ conversation, currentUser, onMessageSent, o
 
     return () => {
       socket.off('connect', joinRoom);
+      socket.off('reconnect', joinRoom);
       socket.off('receive-message', onReceiveMessage);
+      socket.off('new-message-notification', onNotifyMessage);
       socket.off('user-typing', onUserTyping);
       socket.off('user-stop-typing', onUserStopTyping);
       socket.off('message-edited', onMessageEdited);

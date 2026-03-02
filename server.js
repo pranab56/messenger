@@ -31,7 +31,37 @@ const { MongoClient, ObjectId } = require('mongodb');
 
 // Connect standalone mongo client for user presence tracking
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
-mongoClient.connect().then(() => console.log('[SOCKET] MongoDB connected for presence tracking')).catch(console.error);
+mongoClient
+  .connect()
+  .then(async () => {
+    console.log('[SOCKET] MongoDB connected for presence tracking');
+    try {
+      const db = mongoClient.db('tradelog_main');
+      // Ensure critical indexes (idempotent)
+      await Promise.all([
+        db.collection('messages').createIndexes([
+          { key: { conversationId: 1, createdAt: -1 }, name: 'msg_conv_created' },
+          { key: { conversationId: 1, senderId: 1, 'readBy.userId': 1 }, name: 'msg_conv_sender_readBy' },
+          { key: { replyTo: 1 }, name: 'msg_replyTo' }
+        ]),
+        db.collection('conversations').createIndexes([
+          { key: { participants: 1, updatedAt: -1 }, name: 'conv_participants_updated' }
+        ]),
+        db.collection('message_requests').createIndexes([
+          { key: { senderId: 1, receiverId: 1 }, name: 'req_sender_receiver', unique: true },
+          { key: { receiverId: 1, status: 1, createdAt: -1 }, name: 'req_receiver_status_created' }
+        ]),
+        db.collection('users').createIndexes([
+          { key: { email: 1 }, name: 'users_email_ci', collation: { locale: 'en', strength: 2 } },
+          { key: { name: 'text', email: 'text' }, name: 'users_text_name_email' }
+        ])
+      ]);
+      console.log('[DB] Indexes ensured on messages, conversations, message_requests, users');
+    } catch (e) {
+      console.error('[DB] Failed to ensure indexes:', e);
+    }
+  })
+  .catch(console.error);
 
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
@@ -56,6 +86,23 @@ app.prepare().then(() => {
     pingInterval: 25000,
     connectTimeout: 60000,
   });
+
+  // Enable cross-instance delivery in production using Redis adapter (optional)
+  if (process.env.REDIS_URL) {
+    try {
+      // Lazy-require to avoid local dev dependency
+      const { createAdapter } = require('@socket.io/redis-adapter');
+      const IORedis = require('ioredis');
+      const pub = new IORedis(process.env.REDIS_URL);
+      const sub = pub.duplicate();
+      io.adapter(createAdapter(pub, sub));
+      console.log('[SOCKET] Using Redis adapter for multi-instance scaling');
+    } catch (e) {
+      console.warn('[SOCKET] Redis adapter not enabled:', e?.message || e);
+    }
+  } else {
+    console.log('[SOCKET] REDIS_URL not set — running single-instance adapter');
+  }
 
   global.io = io;
 

@@ -31,20 +31,36 @@ export async function GET(req: Request) {
     console.log('Query:', query);
     console.log('Current User Email:', decoded.email);
 
-    // native driver search
-    const users = await usersCollection.find({
-      email: { $ne: decoded.email },
-      $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { email: { $regex: query, $options: 'i' } }
-      ]
-    }).project({
-      name: 1,
-      email: 1,
-      profileImage: 1,
-      username: 1,
-      onlineStatus: 1
-    }).limit(10).toArray();
+    // Prefer indexed text search; fall back to regex if no text index
+    let users;
+    try {
+      users = await usersCollection
+        .find(
+          { $text: { $search: query }, email: { $ne: decoded.email } },
+          { projection: { score: { $meta: 'textScore' }, name: 1, email: 1, profileImage: 1, username: 1, onlineStatus: 1 } }
+        )
+        .sort({ score: { $meta: 'textScore' } })
+        .limit(10)
+        .toArray();
+    } catch {
+      users = await usersCollection
+        .find({
+          email: { $ne: decoded.email },
+          $or: [
+            { name: { $regex: query, $options: 'i' } },
+            { email: { $regex: query, $options: 'i' } }
+          ]
+        })
+        .project({
+          name: 1,
+          email: 1,
+          profileImage: 1,
+          username: 1,
+          onlineStatus: 1
+        })
+        .limit(10)
+        .toArray();
+    }
 
     const totalUsers = await usersCollection.countDocuments();
     console.log(`Total users in native DB: ${totalUsers}`);

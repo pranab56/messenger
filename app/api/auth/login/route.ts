@@ -16,10 +16,11 @@ export async function POST(req: Request) {
     const db = await getDb('tradelog_main');
     const usersCollection = db.collection('users');
 
-    // Case-insensitive search on the email field
-    const user = await usersCollection.findOne({
-      email: { $regex: new RegExp(`^${searchEmail}$`, 'i') }
-    });
+    // Case-insensitive exact match using indexed collation
+    const user = await usersCollection.findOne(
+      { email: searchEmail },
+      { collation: { locale: 'en', strength: 2 } }
+    );
 
     if (!user) {
       console.warn(`[LOGIN] User not found: ${searchEmail}`);
