@@ -154,7 +154,7 @@ export default function ChatWindow({ conversation, currentUser, onMessageSent, o
       }
 
       const pageToFetch = isInitial ? 1 : pageRef.current + 1;
-      const res = await axios.get(`/api/messages?conversationId=${conversation._id}&page=${pageToFetch}&limit=20`);
+      const res = await axios.get(`/api/messages?conversationId=${conversation._id}&page=${pageToFetch}&limit=15`);
 
       const newMessages = res.data.messages;
 
